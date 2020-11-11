@@ -1,0 +1,9 @@
+General relativity (GR), also known as the general theory of relativity (GTR),
+is the geometric theory of gravitation published by Albert Einstein in 1915 and
+the current description of gravitation in modern physics. General relativity
+generalizes special relativity and refines Newton's law of universal gravitation,
+providing a unified description of gravity as a geometric property of space and
+time, or spacetime. In particular, the curvature of spacetime is directly related
+to the energy and momentum of whatever matter and radiation are present. The
+relation is specified by the Einstein field equations, a system of partial
+differential equations. %\cite{smalley_1997}
