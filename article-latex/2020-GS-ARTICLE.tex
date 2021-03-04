@@ -50,7 +50,9 @@
 %-------------------------------------------------------------------------------
 \subsection*{DELAY FEEDBACK IN LOOP}
 
-descrizione
+La prima implementazione del comb filter: essa consiste in un ritardo di
+\textit{n} campioni in feedback, ma presenta un errore di 1 campione di
+offset.
 
 %------------------------------------------------------
 %------------------------- larghezza massima del codice
@@ -60,7 +62,8 @@ descrizione
 dfl(t,g) = (+ : @(t))~*(g);
 \end{lstlisting}
 
-descrizione
+Nell'implementazione seguente l'errore viene risolto con una semplice
+sottrazione, e l'aggiunta di un campione di ritardo.
 
 \begin{lstlisting}
 //------------------ DELAY FEEDBACK IN LOOP - FIXED ---
@@ -68,7 +71,8 @@ descrizione
 dflc(t,g) = (+ : @(t-1))~*(g) : mem;
 \end{lstlisting}
 
-descrizione
+La soluzione successiva si differenzia dalla precedente attraverso la
+possibilità di variare il tempo di ritardo, allocando un limite di memoria.
 
 \begin{lstlisting}
 //-------------------------- DFL - FIXED - VARIABLE ---
@@ -80,6 +84,7 @@ dflcc(t,g) = (+ :
 %-------------------------------------------------------------------------------
 \subsection*{ALL-PASS FILTER}
 
+La seguente consiste nella implementazione dell'Allpass Filter.
 %------------------------------------------------------
 %------------------------- larghezza massima del codice
 \begin{lstlisting}
@@ -93,6 +98,10 @@ apf(t,g) = _ <: *(-g)+(dflcc(t,g)*(1-(g*g)));
 %------------------------------------------------------
 %------------------------- larghezza massima del codice
 \begin{lstlisting}
+
+Schroeder calcola con questa formula il tempo di decadimento fino ad una
+attenuazione di 60db, attraverso l'utilizzo delle variabili \textit{t}
+tempo e \textit{g} gain.
 //--------------------------------------------- T60 ---
 // For a feedback loop with open loop gain g, the sound
 // level decay by -20*log(g) decibels for every trip
@@ -106,6 +115,11 @@ process = msT60(0.1,0.708); // 2 seconds
 \subsection*{ALL-PASS REVERBERATOR}
 %------------------------------------------------------
 %------------------------- larghezza massima del codice
+
+Il tempo di ritardo è calcolato con la proporzione impostata da Schroeder,
+consistente in una diminuzione del ritardo di 1/3 rispetto al precedente,
+qui opportunamente scalato al numero primo più prossimo.
+
 \begin{lstlisting}
 //------------------------ INCREASE OF ECHO DENSITY ---
 // The delay of each section is made about 1/3 of the
@@ -130,6 +144,10 @@ ied5 = apf(5507,0.7) :
 \subsection*{NON-EXPONENTIAL DECAY}
 %------------------------------------------------------
 %------------------------- larghezza massima del codice
+
+Nella seguente implementazione viene realizzato un riverbero con \textit{decay}
+lineare.
+
 \begin{lstlisting}
 //--------- MIXING OF DIRECTSOUND AND REVERBERATION ---
 //--------------------------- NON-EXPONENTIAL DECAY ---
@@ -142,6 +160,13 @@ aprdw(t,g) = _ <: *(-g)+(dflr(t,g)*(1-(g*g)));
 \subsection*{COMB FILTER REVERBERATION}
 %------------------------------------------------------
 %------------------------- larghezza massima del codice
+
+Per una riverberazione naturale, Schoreder ipotizza l'utilizzo di 4 filtri
+Comb in parallelo, sommati ed elaborati da due filtri Allpass in serie. Il
+valore di ritardo dei Comb deve essere compreso, attraverso l'uso di numeri
+primi, tra i 30 e 45ms. Di seguito viene dimostrato come l'inversione
+della disposizione di Comb e Allpass restituisca lo stesso risultato.
+
 \begin{lstlisting}
 //------------------------ THE COMB FILTER APPROACH ---
 // The values of the delays t1 through t4 are spread
@@ -171,6 +196,12 @@ process = os.impulse <: schrev, (revsch :> _);
 \subsection*{FREQUENCY-DEPENDENT REVERBERATION TIME}
 %------------------------------------------------------
 %------------------------- larghezza massima del codice
+
+Nonostante la letteratura abbia attribuito a Moorer l'idea del filtraggio
+del segnale riverberato al fine di un decadimento più naturale, in realtà
+Schroeder lo ipotizza già nel suo articolo del 1962. Di seguito
+l'implementazione dello stesso.
+
 \begin{lstlisting}
 //----------------- FREQUENCY-DEPENDENT REVERB TIME ---
 // If it is desired to make the reverberation time a
@@ -195,7 +226,8 @@ schfdrevt = _ <: // to 4 parallel comb
   apf(83,0.7) : apf(229,0.7);
 \end{lstlisting}
 
-Descrizione
+Il filtro utilizzato è il successivo, si tratta di un filtro \textit{onepole}
+realizzato a partire da quello implementato da Cycling74'.
 
 %------------------------------------------------------
 %------------------------- larghezza massima del codice
@@ -212,6 +244,14 @@ with{
 \section*{NEXT PRIME}
 %------------------------------------------------------
 %------------------------- larghezza massima del codice
+
+Per una riveberazione con risposta più lineare in frequenza possibili
+si rivela necessario l'utilizzo di numeri primi al fine di evitare tempi di
+ritardo multipli e sottomultipli, che andrebbero a creare risonanze o
+cancellazioni. Di seguito viene presentata una funzione in \textit{c}, che,
+opportunamente importata su Faust, ci permette di prelevare dal tempo di ritardo
+in campioni il numero primo successivo.
+
 \begin{lstlisting}
 #include <stdio.h>
 #include <math.h>
