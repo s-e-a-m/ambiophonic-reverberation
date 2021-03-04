@@ -201,6 +201,7 @@ Descrizione
 %------------------------- larghezza massima del codice
 \begin{lstlisting}
 //-------------------------------- max-msp onepole~ ---
+clip(a,b) = max(a) : min(b);
 onepole(fc) = *(a) : +~*(ac)
 with{
     a= sin(abs(fc)*2*ma.PI/ma.SR) : clip(0,1);
@@ -304,86 +305,97 @@ needed to come together on that magical evening to bring George and the Beatles'
 
 
 \section*{ALGORITMO}
-
+%------------------------------------------------------
+%------------------------- larghezza massima del codice
 \begin{lstlisting}
 import("stdfaust.lib");
 // ------ comb
 //
-dflc(t, g) = (+ : de.delay(ma.SR, int(t-1)))~*(max(0, min(0.999, g))) : mem;
+dflc(t, g) = (+ : de.delay(ma.SR, int(t-1)))
+              ~*(max(0, min(0.999, g))) : mem;
 // ------ allpass
 //
-alp(t, g) = _<:(_*(ma.neg(max(0.5, min(0.9, g)))))+(dflc(t, g)*(1-(g*g)));
+alp(t, g) = _<:(_*(ma.neg(max(0.5, min(0.9, g))))) +
+                (dflc(t, g)*(1-(g*g)));
 // ------ filtro passa basso "onepole" Dattorro inspired
 //
-lp1p(a) = *(a) : + ~ *(1-a);
+clip(a,b) = max(a) : min(b);
+onepole(fc) = *(a) : +~*(ac)
+with{
+    a= sin(abs(fc)*2*ma.PI/ma.SR) : clip(0,1);
+    ac = 1-a;
+};
+// ------ importa funzione nextprimes.h in faust
+//
+//np = ffunction(int next_pr(int), <nextprime.h>,"");
+np = *(1);
 // ------ sliders feedback
 //
 g(x) = hgroup("[01]CONTROL",x);
   gr(x) = g(hgroup("feedback", x));
-      fbkc = gr(hslider("[02]DIFFUSION [style:knob]", 0.708, 0, 0.9, 0.01));
-      fbk = gr(hslider("[03]FB FDN [style:knob]", 0.708, 0, 0.99, 0.01) : si.smoo) ;
-      fbka = gr(hslider("[01]INPUT AP [style:knob]", 0.708, 0, 0.99, 0.01) : si.smoo);
-      fbkm = gr(hslider("[04]MATRIX [style:knob]", 0.708, 0, 0.99, 0.01) : si.smoo);
+      fbkc = gr(hslider("[02]DIFFUSION [style:knob]
+            ", 0.708, 0, 0.9, 0.01));
+      fbk = gr(hslider("[03]FB FDN [style:knob]
+            ", 0.708, 0, 0.99, 0.01) : si.smoo) ;
+      fbka = gr(hslider("[01]INPUT AP [style:knob]
+            ", 0.708, 0, 0.99, 0.01) : si.smoo);
+      fbkm = gr(hslider("[04]MATRIX [style:knob]
+            ", 0.708, 0, 0.99, 0.01) : si.smoo);
 // ------ slider filtro
 //
 glp(x)  = g(hgroup("filtro",x));
-  bandwidth = glp(hslider("BANDWIDTH [style:knob]", 0.9995, 0.0001, 0.9999999, 0.0000001));
-  damping = glp(hslider("DAMPING [style:knob]", 0.1, 0, 0.999, 0.001));
-// ------ sliders x lunghezza, y altezza, z profondità, le variabili con p indicano la sorgente rispetto alla stanza
+  bandwidth = glp(hslider("BANDWIDTH [style:knob]
+              ", 0.9995, 0.0001, 0.9999999, 0.0000001));
+  damping = glp(hslider("DAMPING [style:knob]
+              ", 0.1, 0, 0.999, 0.001));
+// ------ sliders posizione
 //
 xg(x) = hgroup("[02]ROOM", x);
   yg(x) = xg(hgroup("vertical", x));
-      size = xg((hslider("SIZE [style:knob]",1,0,2,0.01)));
-      x = ((size*(7)));
-      y = ((size*(5)));
-      z = ((size*(3)));
-      xps = xg(hslider("Position",0.5,0,1,0.01));
+  size = xg((hslider("SIZE[style:knob]",1,0,2,0.01)));
+  x = ((size*(7)));
+  y = ((size*(5)));
+  z = ((size*(3)));
+  xps = xg(hslider("Position",0.5,0,1,0.01));
+// ------ sliders vari
+//
+dist = vslider("distance", 1,0.01,20,0.01);
+primes = xg((hslider("PRIMES [style:knob]
+        ",2,2,24000,1)));
 // ------ position values limitati ai valori x,y,z
 //
 xp = x*xps : np;
-// ------ 2 allpass in serie + offset L/R
+// ------ n allpass in serie + offset L/R
 //
-/*ambs(i) =  ambiserie*i, ambiserie*(1-i)
-  with{
-      ambiserie = alp(142, fbka) : alp(307, fbka) : alp(107,fbka) : alp(277, fbka) : alp(311, fbka) : alp(59, fbka);
-  };*/
-//ambiserie = alp(142, fbka) : alp(307, fbka) : alp(107,fbka) : alp(277, fbka) : alp(311, fbka) : alp(59, fbka);
 primeseq(n) = seq(i,n,np);
-ambis(fedb, n) = seq(i, n, alp(pm.l2s(2:primeseq(i+1)),fedb));
-// ------ route + feedback delay network, 6 comb controllati dagli slider
+// ------ route + feedback delay network
 //
-ambifdn4(pippo,n) = (xroute :((alpar(x-xp,fbkc,pippo))*(xps)), ((alpar(xp,fbkc,pippo))*(1-xps)), (alpar(y,fbkc,pippo)) , (alpar(z,fbkc,pippo))) ~ (xfbk(n) : feedbackmatrix(n)) : rut
-  with {
-      xroute(a,b,c,d,a1,b1,c1,d1)=a+a1,b+b1,c+c1,d+d1; // route del segnale in ingresso per le somme
-      feedbackmatrix(N) = bhadamard(N);
-      vbutterfly(n) = si.bus(n) <: (si.bus(n):>bus(n/2)) , ((si.bus(n/2),(si.bus(n/2):par(i,n/2,*(-1)))) :> si.bus(n/2));
-      bhadamard(2) = si.bus(2) <: +,-;
-      bhadamard(n) = si.bus(n) <: (si.bus(n):>si.bus(n/2)) , ((si.bus(n/2),(si.bus(n/2):par(i,n/2,*(-1)))) :> si.bus(n/2))
-               : (bhadamard(n/2) , bhadamard(n/2));
-      xfbk(n) = par(i,n,lp1p(damping)*(fbk)*(1/sqrt(n)));
-      alpar(sb, fb, N)=seq(i,N,alp(pm.l2s(sb:primeseq(i+1)),fb));
-      rut(l, r ,y, z)=l+((y+z)*0.5),r+((y+z)*0.5);
-      //xfbk1 = par(i) // feedback
+ambifdn4(nalp,n) = (xroute :
+    ((alpar(x-xp,fbkc,nalp))*(xps)),
+    ((alpar(xp,fbkc,nalp))*(1-xps)),
+    (alpar(y,fbkc,nalp)),
+    (alpar(z,fbkc,nalp)))
+    ~ (xfbk(n) : feedbackmatrix(n)) : rut
+with {
+
+  xroute(a,b,c,d,a1,b1,c1,d1)=a+a1,b+b1,c+c1,d+d1;
+  feedbackmatrix(N) = bhadamard(N);
+  bhadamard(2) = si.bus(2) <: +,-;
+  bhadamard(n) = si.bus(n) <: (si.bus(n):>si.bus(n/2)),
+      ((si.bus(n/2),(si.bus(n/2):par(i,n/2,*(-1)))) :>
+      si.bus(n/2)) : (bhadamard(n/2) , bhadamard(n/2));
+  xfbk(n) = par(i,n,onepole(damping)*(fbk)*(1/sqrt(n)));
+  alpar(sb, fb, N)=seq(i,N,alp(pm.l2s(sb:primeseq(i+1)),fb));
+  rut(l, r ,y, z)=l+((y+z)*0.5),r+((y+z)*0.5);
   };
 // ------ Reverb systems
 //
-ambidat2ch(pipp) = lp1p(bandwidth) // <: ambis(fbka, n)
-                                   <: ambifdn4(pipp,4); // --- 2 canali ---
-ambidat6ch = lp1p(bandwidth) <: ambs(xps) <: ambifdn6 : sixroute // --- 6 canali ---
-  with{
-      sixroute(a,b,c,d,e,f) = a,c,e,b,d,f; // route per il segnale L/R nel caso dei 6 canali
-  };
+%------------------------------------------------------
+ambidat2ch(nch) = onepole(bandwidth) <:
+                    ambifdn4(nch,4);
 // ------ process
 //
 process = ambidat2ch(4);
-//process = alpar(primes,fbkc,16);
-alpar(t, fb, N) = seq(i,N,alp((t/((i+1)/2)):np,fb));//ambidat2ch(4);
-primes = xg((hslider("PRIMES [style:knob]",2,2,24000,1)));
-np = ffunction(int next_pr(int), <nextprime.h>,"");
-
-dist = vslider("distance", 1,0.01,20,0.01);
-
-//process = deltime(pm.l2s(dist)) : vbargraph("primo",2,pow(2,30));
 \end{lstlisting}
 
 % \begin{warn}[Einstein's theory]
