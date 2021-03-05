@@ -5,8 +5,7 @@
 \newcommand{\mylanguages}{italian,english} % in reverse order
 %---------------------------------------------------------- TITLE & SUBTITLE ---
 \newcommand{\mytitle}{Ambiophonic Reverberation}
-\newcommand{\mysubtitle}{For a more accessible and less technical introduction
-                         to this topic, \\ see Introduction to General Relativity}
+\newcommand{\mysubtitle}{Research Notes}
 %----------------------------------------------------------------- AUTHOR(s) ---
 \newcommand{\authorone}{Paradisi Francesco}
 \newcommand{\institutione}{Conservatorio S. Cecilia di Roma}
@@ -25,23 +24,25 @@
 \begin{document}
 \maketitle
 \thispagestyle{empty}
+
+\nocite{*}
 %-------------------------------------------------------------------- ABSTRACT -
 % The abstract is an external txt file inside the includes folder
 %-------------------------------------------------------------------------------
 
-\section*{TO DO LIST}
-
-\begin{compactitem}
-\item descrizione generica dell'algoritmo di schroeder
-\item le potenzialità dell'algoritmo
-\item implementazione algoritmo in faust
-\item allestimento dell'ambiophonic reverberation in sala concerto
-\item implementazione esplicativa per Live Electronics
-\item approfondimento bibliografico
-\item conclusioni
-\item
-\item
-\end{compactitem}
+% \section*{TO DO LIST}
+%
+% \begin{compactitem}
+% \item descrizione generica dell'algoritmo di schroeder
+% \item le potenzialità dell'algoritmo
+% \item implementazione algoritmo in faust
+% \item allestimento dell'ambiophonic reverberation in sala concerto
+% \item implementazione esplicativa per Live Electronics
+% \item approfondimento bibliografico
+% \item conclusioni
+% \item
+% \item
+% \end{compactitem}
 
 
 
@@ -50,9 +51,10 @@
 %-------------------------------------------------------------------------------
 \subsection*{DELAY FEEDBACK IN LOOP}
 
-La prima implementazione del comb filter: essa consiste in un ritardo di
-\textit{n} campioni in feedback, ma presenta un errore di 1 campione di
-offset.
+Schroeder \cite{ms:62} descrive i principi ed il funzionamento di un filtro
+\emph{comb IIR} consistente in un ritardo di $n$ campioni in feedback.
+L'implementazione digitale diretta presenta un errore di offset di $1$ campione
+in eccedenza rispetto alla risposta all'impulso documentata dall'autore.
 
 %------------------------------------------------------
 %------------------------- larghezza massima del codice
@@ -62,8 +64,10 @@ offset.
 dfl(t,g) = (+ : @(t))~*(g);
 \end{lstlisting}
 
-Nell'implementazione seguente l'errore viene risolto con una semplice
-sottrazione, e l'aggiunta di un campione di ritardo.
+Lo slittamento di $1$ campione è dovuto all'implicito ritardo accumulato
+nell'istanza di feedback. Nell'implementazione seguente l'errore viene risolto
+con una semplice sottrazione di $1$ campione internamente al loop e l'aggiunta
+di un campione di ritardo prima dell'uscita.
 
 \begin{lstlisting}
 //------------------ DELAY FEEDBACK IN LOOP - FIXED ---
@@ -84,7 +88,9 @@ dflcc(t,g) = (+ :
 %-------------------------------------------------------------------------------
 \subsection*{ALL-PASS FILTER}
 
-La seguente consiste nella implementazione dell'Allpass Filter.
+L'implementazione di Schroeder del filtro \emph{all-pass} prevede il riutilizzo
+del circuito di feedback del filtro \emph{comb} precedentemente descritto.
+
 %------------------------------------------------------
 %------------------------- larghezza massima del codice
 \begin{lstlisting}
@@ -94,14 +100,18 @@ apf(t,g) = _ <: *(-g)+(dflcc(t,g)*(1-(g*g)));
 \end{lstlisting}
 
 %-------------------------------------------------------------------------------
+
 \subsection*{T60}
+
+Riferendosi alle ricerche di Sabine, Schroeder calcola con questa formula il
+tempo di decadimento del filtro riverberante fino ad una attenuazione di $60dB$,
+attraverso l'utilizzo delle variabili $t$ tempo di ritardo e $g$ coefficiente
+di attenuazione del circuito di feedback. La relazione tra i due esprime la
+perdita di intensità del circuito ad ogni rivoluzione.
+
 %------------------------------------------------------
 %------------------------- larghezza massima del codice
 \begin{lstlisting}
-
-Schroeder calcola con questa formula il tempo di decadimento fino ad una
-attenuazione di 60db, attraverso l'utilizzo delle variabili \textit{t}
-tempo e \textit{g} gain.
 //--------------------------------------------- T60 ---
 // For a feedback loop with open loop gain g, the sound
 // level decay by -20*log(g) decibels for every trip
@@ -116,9 +126,8 @@ process = msT60(0.1,0.708); // 2 seconds
 %------------------------------------------------------
 %------------------------- larghezza massima del codice
 
-Il tempo di ritardo è calcolato con la proporzione impostata da Schroeder,
-consistente in una diminuzione del ritardo di 1/3 rispetto al precedente,
-qui opportunamente scalato al numero primo più prossimo.
+Il tempo di ritardo è calcolato con la proporzione del di $1/3$ rispetto al
+ritardo precedente, opportunamente scalato al numero primo più prossimo.
 
 \begin{lstlisting}
 //------------------------ INCREASE OF ECHO DENSITY ---
@@ -162,10 +171,11 @@ aprdw(t,g) = _ <: *(-g)+(dflr(t,g)*(1-(g*g)));
 %------------------------- larghezza massima del codice
 
 Per una riverberazione naturale, Schoreder ipotizza l'utilizzo di 4 filtri
-Comb in parallelo, sommati ed elaborati da due filtri Allpass in serie. Il
-valore di ritardo dei Comb deve essere compreso, attraverso l'uso di numeri
-primi, tra i 30 e 45ms. Di seguito viene dimostrato come l'inversione
-della disposizione di Comb e Allpass restituisca lo stesso risultato.
+\emph{comb} in parallelo, sommati ed elaborati da due filtri \emph{all-pass} in
+serie. Il valore di ritardo dei \emph{comb} deve essere compreso, attraverso
+l'uso di numeri primi, tra i 30 e 45ms. Di seguito viene dimostrato come
+l'inversione della disposizione di \emph{comb} e \emph{all-pass} restituisca lo
+stesso risultato.
 
 \begin{lstlisting}
 //------------------------ THE COMB FILTER APPROACH ---
@@ -227,7 +237,7 @@ schfdrevt = _ <: // to 4 parallel comb
 \end{lstlisting}
 
 Il filtro utilizzato è il successivo, si tratta di un filtro \textit{onepole}
-realizzato a partire da quello implementato da Cycling74'.
+realizzato a partire da quello implementato da \emph{Cycling74'} in \emph{maxmsp}.
 
 %------------------------------------------------------
 %------------------------- larghezza massima del codice
@@ -245,12 +255,11 @@ with{
 %------------------------------------------------------
 %------------------------- larghezza massima del codice
 
-Per una riveberazione con risposta più lineare in frequenza possibili
-si rivela necessario l'utilizzo di numeri primi al fine di evitare tempi di
-ritardo multipli e sottomultipli, che andrebbero a creare risonanze o
-cancellazioni. Di seguito viene presentata una funzione in \textit{c}, che,
-opportunamente importata su Faust, ci permette di prelevare dal tempo di ritardo
-in campioni il numero primo successivo.
+Per una riveberazione complessa, senza fenomeni ripetitivi e sincroni si rivela
+necessario l'utilizzo di numeri primi che impedisce il propagarsi di ritardi
+multipli e sottomultipli. Di seguito viene presentata una funzione in linguaggio
+\emph{c}, che, opportunamente importata su \emph{Faust}, permette di prelevare
+dal tempo di ritardo immesso in campioni il numero primo successivo.
 
 \begin{lstlisting}
 #include <stdio.h>
@@ -288,6 +297,9 @@ int is_prime(int num){
 }
 \end{lstlisting}
 
+La riga di import della funzione esterna in Faust che riporta il numero in
+uscita dalla funzione \emph{next\_pr}.
+
 %------------------------------------------------------
 %------------------------- larghezza massima del codice
 \begin{lstlisting}
@@ -295,6 +307,18 @@ np = ffunction(int next_pr(int), <nextprime.h>,"");
 \end{lstlisting}
 
 \section*{AMBIOPHONIC REVERBERATION}
+
+Il riverbero \emph{ambiophonic} consiste nella diffusione del riverbero digitale
+mediante molteplici linee di segnale, attraverso altrettanti elementi di
+diffusione acustica. Schroeder identifica in questa tecnica di riverberazione
+la possibilità di correzione dello spazio acustico di una sala da concerto oltre
+che della sua aumentazione in termini di possibili caratteristiche riverberanti.
+
+Lo sviluppo di questa parte della ricerca è appena iniziato. Il progetto prevede
+l'utilizzo di sedici linee di riverberazione con controllo della frequenza di
+taglio dei filtri \emph{all-pass} a valle della catena, in modo da poter
+controllare attivamente ed adattivamente fino a 16 frequenze di risonanza
+dell'ambiente acustico.
 
 \begin{quote}
   This procedure, which is already obsolete, makes use of delaying devices
@@ -344,7 +368,7 @@ needed to come together on that magical evening to bring George and the Beatles'
 \end{quote}
 
 
-\section*{ALGORITMO}
+\section*{ALGORITMO DI STUDIO}
 %------------------------------------------------------
 %------------------------- larghezza massima del codice
 \begin{lstlisting}

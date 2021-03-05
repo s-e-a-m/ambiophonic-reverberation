@@ -1,10 +1,22 @@
 % problem-topic
-Nel bilanciamento tra riverbero acustico ed elettroacustico il suggerimento di
-schroeder di utilizzare un riverbero ambiofonico non è mai stata considerato
+Il riverbero digitale nei modelli indicati da Schroeder nel testo del 1962
+presenta, a quasi sessanta anni di distanza, innumerevoli spunti di
+sperimentazione e riflessione tanto in ambito tecnico (informatico ed acustico)
+quanto in ambito musicale (compositivo ed interpretativo). Nelle pratiche di
+bilanciamento tra suono acustico ed elettroacustico il riverbero gioca un ruolo
+sostanziale ed il suggerimento conclusivo di Schroeder di utilizzare un
+riverbero ambiofonico per la sala da concerto non risulta essere compreso e
+diffuso nella pratica musicale contemporanea.
 
 %background/literature
-specificare che anche in letteratura manca uno sviluppo dell'idea proposta da
-schroeder e si trovano solo algoritmi relativi al riverbero ('freeverb')
+Generalmente si accomuna la ricerca di Schroeder con sistemi commerciali
+introdotti negli anni ottanta, mentre la sua ricerca appare essere molto più
+estesa ed in prospettiva concertistica, quindi elettroacustica con riferimenti
+alla correzione adattiva degli spazi che risulta essere un ambito di ricerca
+ancora non completamente soddisfatto.
 
 %research method
-la ricerca si è sviluppata in sala da concerto
+La ricerca qui presentata è in una fase di primo sviluppo. Particolare attenzione
+è stata dedicata allo sviluppo di pratiche di analisi dei segnali per testare
+ogni singola fase di sviluppo degli algoritmi proposti da Schroeder e perfettamente
+documentati.
